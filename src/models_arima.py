@@ -22,7 +22,7 @@ def arima_parameters(data):
     return model_auto.order
 
 
-def prepare_data(train_series):
+def prepare_arima_data(train_series):
     """
     Выполняет логарифмирование и взятие первых разностей.
     Предполагается, что порядок дифференцирования d = 1 фиксирован.
@@ -140,7 +140,7 @@ def train_arima(full_series, test_series, arima_order):
     for test_date in test_series.index:
         # Подготовка данных
         train_series = full_series.loc[:test_date].iloc[:-1]
-        train_log_diff, last_log = prepare_data(train_series)
+        train_log_diff, last_log = prepare_arima_data(train_series)
 
         # Прогноз
         diff_pred, ci_lower, ci_upper = fit_and_forecast_arima(

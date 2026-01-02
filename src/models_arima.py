@@ -22,64 +22,6 @@ def arima_parameters(data):
     return model_auto.order
 
 
-# def train_arima(
-#     full_series,
-#     test_series,
-#     arima_order
-# ):
-#     preds_arima = []
-#     preds_lower_arima = []
-#     preds_upper_arima = []
-#     pred_dates_arima = []
-#     residuals = []
-
-#     for test_date in test_series.index:
-#         train_series = full_series.loc[:test_date].iloc[:-1]
-#         train_log = np.log(train_series)
-#         train_log_diff = train_log.diff().dropna()
-
-#         last_log = train_log.iloc[-1]
-#         actual_value = full_series.loc[test_date]
-
-#         model = ARIMA(train_log_diff, order=arima_order)
-#         results = model.fit()
-
-#         forecast = results.get_forecast(steps=1)
-#         diff_pred = forecast.predicted_mean.iloc[0]
-
-#         ci = forecast=.conf_int(alpha=0.05).iloc[0]
-#         ci_lower = ci.iloc[0]
-#         ci_upper = ci.iloc[1]
-
-#         pred_log = last_log + diff_pred
-#         lower_log = last_log + ci_lower
-#         upper_log = last_log + ci_upper
-
-#         pred = np.exp(pred_log)
-#         lower = np.exp(lower_log)
-#         upper = np.exp(upper_log)
-
-#         preds_arima.append(float(pred))
-#         preds_lower_arima.append(float(lower))
-#         preds_upper_arima.append(float(upper))
-#         pred_dates_arima.append(test_date)
-
-#         residual = actual_value - pred
-#         residuals.append(float(residual))
-
-#     results = pd.DataFrame({
-#         'forecast_arima': preds_arima,
-#         'lower_ci': preds_lower_arima,
-#         'upper_ci': preds_upper_arima,
-#         'residual': residuals,
-#         'actual': test_series
-#     }, index=pd.to_datetime(pred_dates_arima))
-
-#     results = results.dropna()
-
-#     return results
-
-
 def prepare_data(train_series):
     """
     Выполняет логарифмирование и взятие первых разностей.
@@ -124,14 +66,14 @@ def fit_and_forecast_arima(train_log_diff, order, alpha=0.05):
         Нижняя граница доверительного интервала.
     ci_upper : float
         Верхняя граница доверительного интервала.
-    """    
+    """
     model = ARIMA(train_log_diff, order=order)
     results = model.fit()
-    
+
     forecast = results.get_forecast(steps=1)
     diff_pred = forecast.predicted_mean.iloc[0]
     ci = forecast.conf_int(alpha=alpha).iloc[0]
-    
+
     return diff_pred, ci.iloc[0], ci.iloc[1]
 
 
@@ -158,15 +100,15 @@ def inverse_transform(last_log, diff_pred, ci_lower, ci_upper):
         Нижняя граница доверительного интервала в исходной шкале.
     upper : float
         Верхняя граница доверительного интервала в исходной шкале.
-    """   
+    """
     pred_log = last_log + diff_pred
     lower_log = last_log + ci_lower
     upper_log = last_log + ci_upper
-    
+
     pred = np.exp(pred_log)
     lower = np.exp(lower_log)
     upper = np.exp(upper_log)
-    
+
     return pred, lower, upper
 
 
@@ -192,24 +134,24 @@ def train_arima(full_series, test_series, arima_order):
         - upper_ci: верхняя граница доверительного интервала
         - residual: разница между фактическим значением и прогнозом(остатки)
         - actual: фактическое значение
-    """    
+    """
     preds, lowers, uppers, dates, residuals = [], [], [], [], []
-    
+
     for test_date in test_series.index:
         # Подготовка данных
         train_series = full_series.loc[:test_date].iloc[:-1]
         train_log_diff, last_log = prepare_data(train_series)
-        
+
         # Прогноз
         diff_pred, ci_lower, ci_upper = fit_and_forecast_arima(
             train_log_diff, arima_order
         )
-        
+
         # Обратное преобразование
         pred, lower, upper = inverse_transform(
             last_log, diff_pred, ci_lower, ci_upper
         )
-        
+
         # Сбор результатов
         actual_value = full_series.loc[test_date]
         collect_results(
@@ -224,11 +166,11 @@ def train_arima(full_series, test_series, arima_order):
         'residual': residuals,
         'actual': test_series
     }, index=pd.to_datetime(dates))
-    
+
     return results
 
 
-def collect_results(date, actual, pred, lower, upper, 
+def collect_results(date, actual, pred, lower, upper,
                     preds, lowers, uppers, dates, residuals):
     """
     Сбор результатов прогноза.

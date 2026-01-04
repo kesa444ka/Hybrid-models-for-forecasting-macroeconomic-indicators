@@ -112,7 +112,7 @@ def inverse_transform(last_log, diff_pred, ci_lower, ci_upper):
     return pred, lower, upper
 
 
-def train_arima(full_series, test_series, arima_order):
+def walk_forward_forecast_arima(full_series, test_series, arima_order):
     """
     Реализация walk-forward прогнозирования временного ряда с ARIMA и расширяющимся окном.а.
 
